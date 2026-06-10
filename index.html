@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Análisis Aduanero - Estilo InfoAduana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col">
+
+    <header class="bg-gray-800 border-b border-gray-700 shadow-lg px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 text-white p-2 rounded-lg shadow-md">
+                <i class="fa-solid fa-chart-line fa-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white">INFO<span class="text-blue-500">ADUANA</span> <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded ml-2">Local Analytics</span></h1>
+                <p class="text-xs text-gray-400">Analizador de Declaraciones Aduaneras de Importación (SENAE)</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="https://www.datosabiertos.gob.ec/dataset/datos-de-declaraciones-aduaneras-de-importacion-regimen-general" target="_blank" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-2 rounded-lg transition flex items-center space-x-1">
+                <i class="fa-solid fa-link text-blue-400"></i>
+                <span>Fuente de Datos Gob.ec</span>
+            </a>
+            <div class="text-sm text-gray-400 border-l border-gray-700 pl-4">
+                <i class="fa-solid fa-user-shield text-green-400 mr-1"></i> Modo local (100% Privado)
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+        
+        <section class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-md transition-all">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                <div>
+                    <h2 class="text-lg font-semibold text-white mb-1"><i class="fa-solid fa-file-csv text-blue-500 mr-2"></i>Cargar Datos de Importación</h2>
+                    <p class="text-sm text-gray-400">Selecciona el archivo `.csv` descargado de la plataforma de datos abiertos.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <label class="flex flex-col items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-md tracking-wide uppercase border border-blue-500 cursor-pointer transition-all duration-150">
+                        <span id="upload-label"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Seleccionar CSV</span>
+                        <input type='file' id="csv-file" accept=".csv" class="hidden" />
+                    </label>
+                    <button id="clear-btn" class="hidden px-4 py-2.5 bg-red-900/40 hover:bg-red-900/60 border border-red-700 text-red-200 text-sm font-medium rounded-lg transition-all">
+                        <i class="fa-solid fa-trash-can"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+            
+            <div id="status-container" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
+        </section>
+
+        <section id="kpi-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 hidden">
+            <div class="bg-gray-800 border border-gray-700 p-5 rounded-xl shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-blue-500/10 text-blue-400 rounded-lg"><i class="fa-solid fa-file-invoice fa-2x"></i></div>
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Total Registros</p>
+                    <p id="kpi-total" class="text-2xl font-bold text-white">0</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 border border-gray-700 p-5 rounded-xl shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-green-500/10 text-green-400 rounded-lg"><i class="fa-solid fa-hand-holding-dollar fa-2x"></i></div>
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">FOB Total (Est.)</p>
+                    <p id="kpi-fob" class="text-2xl font-bold text-white">$0.00</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 border border-gray-700 p-5 rounded-xl shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-purple-500/10 text-purple-400 rounded-lg"><i class="fa-solid fa-boxes-stacked fa-2x"></i></div>
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Peso Neto Total (Kg)</p>
+                    <p id="kpi-peso" class="text-2xl font-bold text-white">0.00</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 border border-gray-700 p-5 rounded-xl shadow-sm flex items-center space-x-4">
+                <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg"><i class="fa-solid fa-building-shield fa-2x"></i></div>
+                <div>
+                    <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Distritos Detectados</p>
+                    <p id="kpi-distritos" class="text-2xl font-bold text-white">0</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="data-section" class="bg-gray-800 border border-gray-700 rounded-xl shadow-md hidden flex flex-col overflow-hidden">
+            <div class="p-4 bg-gray-800/50 border-b border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="relative flex-1 max-w-md">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" id="search-input" class="w-full pl-9 pr-4 py-1.5 text-sm bg-gray-900 border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500" placeholder="Buscar por Importador, Partida, Descripción...">
+                </div>
+                <div class="text-xs text-gray-400 self-center">
+                    Mostrando <span id="showing-count" class="font-semibold text-blue-400">0</span> de <span id="total-count" class="font-semibold text-gray-300">0</span> registros.
+                </div>
+            </div>
+
+            <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-900 text-gray-300 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
+                        <tr id="table-headers">
+                            </tr>
+                    </thead>
+                    <tbody id="table-body" class="text-sm divide-y divide-gray-700 text-gray-300 bg-gray-800">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div class="p-4 bg-gray-900/60 border-t border-gray-700 flex items-center justify-between text-xs text-gray-400">
+                <button id="prev-page" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded border border-gray-700 transition disabled:opacity-40 disabled:cursor-not-allowed">Anterior</button>
+                <span id="page-info">Página 1 de 1</span>
+                <button id="next-page" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded border border-gray-700 transition disabled:opacity-40 disabled:cursor-not-allowed">Siguiente</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-950 border-t border-gray-800 py-3 text-center text-xs text-gray-500 mt-auto">
+        Panel de análisis optimizado para esquemas de datos abiertos SENAE Ecuador (2026). Desarrollado con arquitectura local segura.
+    </footer>
+
+    <script>
+        let rawData = [];
+        let filteredData = [];
+        let headers = [];
+        
+        // Configuración de paginación
+        let currentPage = 1;
+        const rowsPerPage = 50;
+
+        // Elementos del DOM
+        const fileInput = document.getElementById('csv-file');
+        const uploadLabel = document.getElementById('upload-label');
+        const clearBtn = document.getElementById('clear-btn');
+        const statusContainer = document.getElementById('status-container');
+        const kpiSection = document.getElementById('kpi-section');
+        const dataSection = document.getElementById('data-section');
+        const tableHeaders = document.getElementById('table-headers');
+        const tableBody = document.getElementById('table-body');
+        const searchInput = document.getElementById('search-input');
+        const showingCount = document.getElementById('showing-count');
+        const totalCount = document.getElementById('total-count');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+
+        // Escuchar la carga del archivo
+        fileInput.addEventListener('change', handleFileLoad);
+        clearBtn.addEventListener('click', resetApp);
+        searchInput.addEventListener('input', handleSearch);
+        prevPageBtn.addEventListener('click', () => changePage(-1));
+        nextPageBtn.addEventListener('click', () => changePage(1));
+
+        function handleFileLoad(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            uploadLabel.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> Procesando...`;
+            showStatus('Leyendo estructura y mapeando registros del archivo aduanero...', 'info');
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    rawData = results.data;
+                    filteredData = [...rawData];
+                    
+                    if(rawData.length > 0) {
+                        headers = Object.keys(rawData[0]);
+                        renderHeaders();
+                        calculateKPIs();
+                        displayData();
+                        
+                        // Mostrar secciones de la app
+                        kpiSection.classList.remove('hidden');
+                        dataSection.classList.remove('hidden');
+                        clearBtn.classList.remove('hidden');
+                        uploadLabel.innerHTML = `<i class="fa-solid fa-check mr-2"></i> Archivo Cargado`;
+                        showStatus(`Éxito: Se han procesado e indexado correctamente <strong>${rawData.length.toLocaleString()}</strong> declaraciones aduaneras.`, 'success');
+                    } else {
+                        showStatus('El archivo parece estar vacío o no tiene un formato válido.', 'error');
+                        resetApp();
+                    }
+                },
+                error: function(err) {
+                    showStatus('Error al leer el archivo CSV: ' + err.message, 'error');
+                    resetApp();
+                }
+            });
+        }
+
+        function renderHeaders() {
+            tableHeaders.innerHTML = '';
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.className = "px-4 py-3 border-b border-gray-700 text-left font-semibold text-gray-200 cursor-pointer hover:bg-gray-800 transition text-[11px]";
+                th.innerHTML = `${normalizeHeaderName(header)} <i class="fa-solid fa-sort ml-1 text-gray-500 text-[10px]"></i>`;
+                tableHeaders.appendChild(th);
+            });
+        }
+
+        // Traduce u optimiza nombres comunes del SENAE para que se vea limpio como InfoAduana
+        function normalizeHeaderName(name) {
+            return name.replace(/_/g, ' ').toUpperCase();
+        }
+
+        function displayData() {
+            tableBody.innerHTML = '';
+            
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const pageData = filteredData.slice(start, end);
+
+            if(pageData.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="${headers.length}" class="text-center py-8 text-gray-500"><i class="fa-solid fa-folder-open fa-2xl mb-3 block"></i> No se encontraron coincidencias en la consulta aduanera.</td></tr>`;
+                updatePaginationControls();
+                return;
+            }
+
+            pageData.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = idx % 2 === 0 ? 'bg-gray-800 hover:bg-gray-750 transition' : 'bg-gray-800/40 hover:bg-gray-750 transition';
+                
+                headers.forEach(header => {
+                    const td = document.createElement('td');
+                    td.className = "px-4 py-2.5 border-b border-gray-700 max-w-xs truncate text-[12px] text-gray-300 font-mono";
+                    let val = row[header] !== null && row[header] !== undefined ? row[header] : '-';
+                    
+                    // Formatear dinámicamente si parece dinero o pesos
+                    if(typeof val === 'number' && (header.toLowerCase().includes('fob') || header.toLowerCase().includes('valor') || header.toLowerCase().includes('vnr'))) {
+                        td.textContent = '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        td.classList.add('text-green-400');
+                    } else if(typeof val === 'number' && (header.toLowerCase().includes('peso') || header.toLowerCase().includes('kilogramo'))) {
+                        td.textContent = val.toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' Kg';
+                    } else {
+                        td.textContent = val;
+                    }
+                    
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+
+            updatePaginationControls();
+        }
+
+        function calculateKPIs() {
+            // Intentar detectar columnas financieras o de volumen comunes en el portal de datos abiertos ecuatoriano
+            const fobKey = headers.find(h => h.toLowerCase().includes('fob') || h.toLowerCase().includes('valor_declarado'));
+            const pesoKey = headers.find(h => h.toLowerCase().includes('peso') || h.toLowerCase().includes('kilogramo') || h.toLowerCase().includes('peso_neto'));
+            const distritoKey = headers.find(h => h.toLowerCase().includes('distrito') || h.toLowerCase().includes('aduana') || h.toLowerCase().includes('adua_despacho'));
+
+            let totalFob = 0;
+            let totalPeso = 0;
+            let distritosUnicos = new Set();
+
+            rawData.forEach(row => {
+                if(fobKey && row[fobKey]) totalFob += parseFloat(row[fobKey]) || 0;
+                if(pesoKey && row[pesoKey]) totalPeso += parseFloat(row[pesoKey]) || 0;
+                if(distritoKey && row[distritoKey]) distritosUnicos.add(row[distritoKey]);
+            });
+
+            document.getElementById('kpi-total').textContent = rawData.length.toLocaleString();
+            document.getElementById('kpi-fob').textContent = totalFob > 0 ? '$' + totalFob.toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
+            document.getElementById('kpi-peso').textContent = totalPeso > 0 ? totalPeso.toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
+            document.getElementById('kpi-distritos').textContent = distritosUnicos.size > 0 ? distritosUnicos.size : 'N/A';
+        }
+
+        function handleSearch() {
+            const query = searchInput.value.toLowerCase().trim();
+            currentPage = 1;
+
+            if (!query) {
+                filteredData = [...rawData];
+            } else {
+                filteredData = rawData.filter(row => {
+                    return headers.some(header => {
+                        const cellValue = String(row[header]).toLowerCase();
+                        return cellValue.includes(query);
+                    });
+                });
+            }
+            displayData();
+        }
+
+        function updatePaginationControls() {
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
+            showingCount.textContent = filteredData.length.toLocaleString();
+            totalCount.textContent = rawData.length.toLocaleString();
+            
+            pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+            
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages;
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            displayData();
+        }
+
+        function showStatus(msg, type) {
+            statusContainer.classList.remove('hidden', 'bg-blue-900/30', 'text-blue-300', 'border-blue-700', 'bg-green-900/30', 'text-green-300', 'border-green-700', 'bg-red-900/30', 'text-red-300', 'border-red-700');
+            statusContainer.classList.add('border');
+            
+            if(type === 'success') {
+                statusContainer.classList.add('bg-green-900/30', 'text-green-300', 'border-green-700');
+            } else if(type === 'error') {
+                statusContainer.classList.add('bg-red-900/30', 'text-red-300', 'border-red-700');
+            } else {
+                statusContainer.classList.add('bg-blue-900/30', 'text-blue-300', 'border-blue-700');
+            }
+            statusContainer.innerHTML = msg;
+        }
+
+        function resetApp() {
+            rawData = [];
+            filteredData = [];
+            headers = [];
+            currentPage = 1;
+            fileInput.value = '';
+            searchInput.value = '';
+            
+            uploadLabel.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Seleccionar CSV`;
+            kpiSection.classList.add('hidden');
+            dataSection.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+            statusContainer.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
