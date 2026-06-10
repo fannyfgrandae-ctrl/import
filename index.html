@@ -3,333 +3,503 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Análisis Aduanero - Estilo InfoAduana</title>
+    <title>INFOADUANA Analitica Avanzada - COBUSGROUP Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @media print {
+            body { background: white; color: black; font-size: 10pt; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .print-card { border: 1px solid #ccc !important; background: white !important; color: black !important; box-shadow: none !important; }
+            .print-table { width: 100% !important; max-height: none !important; overflow: visible !important; }
+            th { background-color: #f3f4f6 !important; color: black !important; border-bottom: 2px solid black !important; }
+            td { border-bottom: 1px solid #eee !important; color: black !important; }
+            @page { size: A4 landscape; margin: 10mm; }
+        }
+        /* Scrollbar personalizado estilo Dashboard */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col">
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen flex flex-col antialiased">
 
-    <header class="bg-gray-800 border-b border-gray-700 shadow-lg px-6 py-4 flex justify-between items-center">
+    <div class="hidden print-only w-full mb-6 border-b-2 border-gray-800 pb-4">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">INFOADUANA - REPORTES DE IMPORTACIÓN</h1>
+                <p class="text-xs text-gray-600">Filtros aplicados | Producto/Búsqueda: <span id="print-filtered-prod" class="font-bold">-</span> | Año: <span id="print-filtered-year" class="font-bold">Todos</span></p>
+            </div>
+            <div class="text-right text-xs text-gray-500">
+                <p>Fecha de Emisión: 09/06/2026</p>
+                <p>Origen: Datos Abiertos SENAE Ecuador</p>
+            </div>
+        </div>
+    </div>
+
+    <header class="bg-gray-850 border-b border-gray-700 shadow-xl px-6 py-4 flex justify-between items-center no-print">
         <div class="flex items-center space-x-3">
-            <div class="bg-blue-600 text-white p-2 rounded-lg shadow-md">
-                <i class="fa-solid fa-chart-line fa-lg"></i>
+            <div class="bg-gradient-to-tr from-blue-700 to-blue-500 text-white p-2.5 rounded-xl shadow-lg">
+                <i class="fa-solid fa-layer-group fa-xl"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold tracking-tight text-white">INFO<span class="text-blue-500">ADUANA</span> <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded ml-2">Local Analytics</span></h1>
-                <p class="text-xs text-gray-400">Analizador de Declaraciones Aduaneras de Importación (SENAE)</p>
+                <h1 class="text-xl font-black tracking-wider text-white">INFO<span class="text-blue-500">ADUANA</span> <span class="text-xs font-bold bg-blue-950 text-blue-400 px-2 py-0.5 rounded border border-blue-800/60 ml-2">PRO v2.5</span></h1>
+                <p class="text-[11px] text-gray-400 font-medium">Consolidador Multi-Archivo y Analizador de Inteligencia Comercial</p>
             </div>
         </div>
         <div class="flex items-center space-x-4">
-            <a href="https://www.datosabiertos.gob.ec/dataset/datos-de-declaraciones-aduaneras-de-importacion-regimen-general" target="_blank" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-2 rounded-lg transition flex items-center space-x-1">
-                <i class="fa-solid fa-link text-blue-400"></i>
-                <span>Fuente de Datos Gob.ec</span>
+            <a href="https://www.datosabiertos.gob.ec/dataset/datos-de-declaraciones-aduaneras-de-importacion-regimen-general" target="_blank" class="text-xs bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 px-3 py-2 rounded-lg transition-all flex items-center space-x-2 shadow-sm">
+                <i class="fa-solid fa-database text-blue-400"></i>
+                <span>Portal Datos Abiertos</span>
             </a>
-            <div class="text-sm text-gray-400 border-l border-gray-700 pl-4">
-                <i class="fa-solid fa-user-shield text-green-400 mr-1"></i> Modo local (100% Privado)
+            <div class="text-xs font-mono text-gray-400 bg-gray-900 px-3 py-2 rounded-lg border border-gray-800">
+                <i class="fa-solid fa-server text-emerald-400 mr-1.5 animate-pulse"></i>Procesamiento Local Protegido
             </div>
         </div>
     </header>
 
-    <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+    <main class="flex-1 p-6 max-w-[1600px] w-full mx-auto space-y-6">
         
-        <section class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-md transition-all">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                <div>
-                    <h2 class="text-lg font-semibold text-white mb-1"><i class="fa-solid fa-file-csv text-blue-500 mr-2"></i>Cargar Datos de Importación</h2>
-                    <p class="text-sm text-gray-400">Selecciona el archivo `.csv` descargado de la plataforma de datos abiertos.</p>
+        <section class="bg-gray-850 border border-gray-700/70 rounded-xl p-5 shadow-lg no-print">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+                <div class="lg:col-span-2">
+                    <h2 class="text-sm font-semibold text-gray-200 uppercase tracking-wider mb-2"><i class="fa-solid fa-folder-plus text-blue-500 mr-2"></i>Cargar Uno o Múltiples Archivos CSV</h2>
+                    <p class="text-xs text-gray-400 mb-3">Puedes seleccionar varios archivos anuales simultáneamente (Ej: 2024.csv, 2025.csv, 2026.csv) para consolidar el histórico de transacciones.</p>
+                    <div class="flex items-center space-x-3">
+                        <label class="flex flex-col items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-md uppercase tracking-wide border border-blue-500 cursor-pointer transition-all">
+                            <span><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Adjuntar Archivos CSV</span>
+                            <input type='file' id="csv-file" accept=".csv" multiple class="hidden" />
+                        </label>
+                        <button id="clear-btn" class="hidden px-4 py-2.5 bg-red-950/40 hover:bg-red-900/40 border border-red-800 text-red-300 text-xs font-bold rounded-lg transition-all">
+                            <i class="fa-solid fa-clock-rotate-left mr-1.5"></i>Reiniciar Consola
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <label class="flex flex-col items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-md tracking-wide uppercase border border-blue-500 cursor-pointer transition-all duration-150">
-                        <span id="upload-label"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Seleccionar CSV</span>
-                        <input type='file' id="csv-file" accept=".csv" class="hidden" />
-                    </label>
-                    <button id="clear-btn" class="hidden px-4 py-2.5 bg-red-900/40 hover:bg-red-900/60 border border-red-700 text-red-200 text-sm font-medium rounded-lg transition-all">
-                        <i class="fa-solid fa-trash-can"></i> Limpiar
-                    </button>
+                
+                <div class="bg-gray-900/60 p-3.5 rounded-lg border border-gray-800 h-full flex flex-col justify-center">
+                    <span class="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Archivos Procesados:</span>
+                    <div id="file-badges-container" class="text-xs text-gray-500 italic">Ningún archivo cargado actualmente.</div>
                 </div>
             </div>
             
-            <div id="status-container" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
+            <div id="status-container" class="hidden mt-4 p-3 rounded-lg text-xs font-medium border"></div>
         </section>
 
-        <section id="kpi-section" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 hidden">
-            <div class="bg-gray-800 border border-gray-700 p-5 rounded-xl shadow-sm flex items-center space-x-4">
-                <div class="p-3 bg-blue-500/10 text-blue-400 rounded-lg"><i class="fa-solid fa-file-invoice fa-2x"></i></div>
+        <section id="kpi-section" class="grid grid-cols-2 lg:grid-cols-4 gap-4 hidden">
+            <div class="bg-gray-850 border border-gray-700/60 p-4 rounded-xl shadow-md flex items-center space-x-3 print-card">
+                <div class="p-3 bg-blue-500/10 text-blue-400 rounded-lg no-print"><i class="fa-solid fa-list-check text-lg"></i></div>
                 <div>
-                    <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Total Registros</p>
-                    <p id="kpi-total" class="text-2xl font-bold text-white">0</p>
+                    <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Registros Encontrados</p>
+                    <p id="kpi-total" class="text-xl font-bold text-white print:text-black">0</p>
                 </div>
             </div>
-            <div class="bg-gray-800 border border-gray-700 p-5 rounded-xl shadow-sm flex items-center space-x-4">
-                <div class="p-3 bg-green-500/10 text-green-400 rounded-lg"><i class="fa-solid fa-hand-holding-dollar fa-2x"></i></div>
+            <div class="bg-gray-850 border border-gray-700/60 p-4 rounded-xl shadow-md flex items-center space-x-3 print-card">
+                <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-lg no-print"><i class="fa-solid fa-scale-balanced text-lg"></i></div>
                 <div>
-                    <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">FOB Total (Est.)</p>
-                    <p id="kpi-fob" class="text-2xl font-bold text-white">$0.00</p>
+                    <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Valor FOB Total Consolidado</p>
+                    <p id="kpi-fob" class="text-xl font-bold text-emerald-400 print:text-black">$0.00</p>
                 </div>
             </div>
-            <div class="bg-gray-800 border border-gray-700 p-5 rounded-xl shadow-sm flex items-center space-x-4">
-                <div class="p-3 bg-purple-500/10 text-purple-400 rounded-lg"><i class="fa-solid fa-boxes-stacked fa-2x"></i></div>
+            <div class="bg-gray-850 border border-gray-700/60 p-4 rounded-xl shadow-md flex items-center space-x-3 print-card">
+                <div class="p-3 bg-purple-500/10 text-purple-400 rounded-lg no-print"><i class="fa-solid fa-weight-hanging text-lg"></i></div>
                 <div>
-                    <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Peso Neto Total (Kg)</p>
-                    <p id="kpi-peso" class="text-2xl font-bold text-white">0.00</p>
+                    <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Volumen Neto (Toneladas)</p>
+                    <p id="kpi-peso" class="text-xl font-bold text-white print:text-black">0.00 Ton</p>
                 </div>
             </div>
-            <div class="bg-gray-800 border border-gray-700 p-5 rounded-xl shadow-sm flex items-center space-x-4">
-                <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg"><i class="fa-solid fa-building-shield fa-2x"></i></div>
+            <div class="bg-gray-850 border border-gray-700/60 p-4 rounded-xl shadow-md flex items-center space-x-3 print-card">
+                <div class="p-3 bg-amber-500/10 text-amber-400 rounded-lg no-print"><i class="fa-solid fa-earth-americas text-lg"></i></div>
                 <div>
-                    <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Distritos Detectados</p>
-                    <p id="kpi-distritos" class="text-2xl font-bold text-white">0</p>
+                    <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Carga de Orígenes (Países)</p>
+                    <p id="kpi-paises" class="text-xl font-bold text-white print:text-black">0</p>
                 </div>
             </div>
         </section>
 
-        <section id="data-section" class="bg-gray-800 border border-gray-700 rounded-xl shadow-md hidden flex flex-col overflow-hidden">
-            <div class="p-4 bg-gray-800/50 border-b border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <section id="analysis-section" class="grid grid-cols-1 lg:grid-cols-3 gap-6 hidden">
+            <div class="bg-gray-850 border border-gray-700/60 rounded-xl p-4 shadow-md flex flex-col justify-between print-card">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-gray-300 mb-3 text-blue-400"><i class="fa-solid fa-building text-blue-500 mr-2"></i>Top 5 Importadores Clave</h3>
+                    <div id="analysis-importadores" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
+
+            <div class="bg-gray-850 border border-gray-700/60 rounded-xl p-4 shadow-md flex flex-col justify-between print-card">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-gray-300 mb-3 text-purple-400"><i class="fa-solid fa-ship text-purple-500 mr-2"></i>Top 5 Países de Origen</h3>
+                    <div id="analysis-paises" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
+
+            <div class="bg-gray-850 border border-gray-700/60 rounded-xl p-4 shadow-md flex flex-col justify-between print-card">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-gray-300 mb-3 text-amber-400"><i class="fa-solid fa-chart-pie text-amber-500 mr-2"></i>Métricas de Precio y Aduana</h3>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between p-2 bg-gray-900/40 rounded border border-gray-800">
+                            <span class="text-gray-400">Precio Promedio FOB / Kg:</span>
+                            <span id="analysis-avg-price" class="font-mono font-bold text-emerald-400">$0.00</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-900/40 rounded border border-gray-800">
+                            <span class="text-gray-400">Distrito de Mayor Ingreso:</span>
+                            <span id="analysis-top-distrito" class="font-bold text-gray-200 truncate max-w-[180px] text-right">-</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-900/40 rounded border border-gray-800">
+                            <span class="text-gray-400">Año de Mayor Actividad:</span>
+                            <span id="analysis-top-year" class="font-bold text-blue-400">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="data-section" class="bg-gray-850 border border-gray-700/60 rounded-xl shadow-xl hidden flex flex-col overflow-hidden print-card">
+            
+            <div class="p-4 bg-gray-900/40 border-b border-gray-700/60 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 no-print">
+                
                 <div class="relative flex-1 max-w-md">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                         <i class="fa-solid fa-magnifying-glass text-xs"></i>
                     </span>
-                    <input type="text" id="search-input" class="w-full pl-9 pr-4 py-1.5 text-sm bg-gray-900 border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500" placeholder="Buscar por Importador, Partida, Descripción...">
+                    <input type="text" id="search-input" class="w-full pl-9 pr-4 py-1.5 text-xs bg-gray-950 border border-gray-700 rounded-lg text-gray-200 focus:outline-none focus:border-blue-500 placeholder-gray-500 font-medium" placeholder="Filtro por Producto o RUC (Partida, Importador, Descripción)...">
                 </div>
-                <div class="text-xs text-gray-400 self-center">
-                    Mostrando <span id="showing-count" class="font-semibold text-blue-400">0</span> de <span id="total-count" class="font-semibold text-gray-300">0</span> registros.
+                
+                <div class="flex items-center space-x-2">
+                    <label for="year-select" class="text-xs font-bold uppercase tracking-wider text-gray-400 whitespace-nowrap"><i class="fa-solid fa-calendar-days text-blue-500 mr-1"></i> Filtrar Año:</label>
+                    <select id="year-select" class="bg-gray-950 border border-gray-700 text-gray-200 text-xs rounded-lg py-1.5 px-3 focus:outline-none focus:border-blue-500 font-mono">
+                        <option value="ALL">Todos los años consolidados</option>
+                    </select>
+                </div>
+
+                <button id="print-btn" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-gray-200 px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-2 shadow-sm">
+                    <i class="fa-solid fa-print text-amber-400"></i>
+                    <span>Imprimir Listado</span>
+                </button>
+            </div>
+
+            <div class="px-4 py-2 bg-gray-900/20 border-b border-gray-700/40 text-[11px] text-gray-400 flex justify-between items-center">
+                <div>
+                    Mapeo de registros: Mostrando <span id="showing-count" class="font-bold text-blue-400">0</span> de un universo consolidado de <span id="total-count" class="font-medium text-gray-300">0</span> filas aduaneras.
                 </div>
             </div>
 
-            <div class="overflow-x-auto max-h-[550px] overflow-y-auto">
+            <div class="overflow-x-auto max-h-[500px] overflow-y-auto print-table">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-900 text-gray-300 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10 shadow-sm">
-                        <tr id="table-headers">
-                            </tr>
+                    <thead class="bg-gray-950 text-gray-400 text-[10px] font-bold uppercase tracking-wider sticky top-0 z-10 shadow-sm border-b border-gray-700">
+                        <tr id="table-headers"></tr>
                     </thead>
-                    <tbody id="table-body" class="text-sm divide-y divide-gray-700 text-gray-300 bg-gray-800">
-                        </tbody>
+                    <tbody id="table-body" class="text-[11px] divide-y divide-gray-700/50 text-gray-300 bg-gray-850 font-mono"></tbody>
                 </table>
             </div>
             
-            <div class="p-4 bg-gray-900/60 border-t border-gray-700 flex items-center justify-between text-xs text-gray-400">
-                <button id="prev-page" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded border border-gray-700 transition disabled:opacity-40 disabled:cursor-not-allowed">Anterior</button>
-                <span id="page-info">Página 1 de 1</span>
-                <button id="next-page" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded border border-gray-700 transition disabled:opacity-40 disabled:cursor-not-allowed">Siguiente</button>
+            <div class="p-3 bg-gray-950/60 border-t border-gray-700/60 flex items-center justify-between text-xs text-gray-400 no-print">
+                <button id="prev-page" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded border border-gray-700 text-[11px] font-medium transition disabled:opacity-30 disabled:cursor-not-allowed">Anterior</button>
+                <span id="page-info" class="font-medium">Página 1 de 1</span>
+                <button id="next-page" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded border border-gray-700 text-[11px] font-medium transition disabled:opacity-30 disabled:cursor-not-allowed">Siguiente</button>
             </div>
         </section>
 
     </main>
 
-    <footer class="bg-gray-950 border-t border-gray-800 py-3 text-center text-xs text-gray-500 mt-auto">
-        Panel de análisis optimizado para esquemas de datos abiertos SENAE Ecuador (2026). Desarrollado con arquitectura local segura.
+    <footer class="bg-gray-950 border-t border-gray-800/80 py-3 text-center text-[11px] text-gray-500 mt-auto no-print">
+        INFOADUANA Analitica Local 2026 | Desarrollado para Auditorías y Control Económico de Importaciones.
     </footer>
 
     <script>
-        let rawData = [];
-        let filteredData = [];
-        let headers = [];
+        let rawDataCentral = [];
+        let filteredDataCentral = [];
+        let tableHeadersList = [];
+        let detectedYears = new Set();
+        let loadedFilesNames = [];
         
-        // Configuración de paginación
         let currentPage = 1;
-        const rowsPerPage = 50;
+        const rowsPerPage = 40;
 
-        // Elementos del DOM
         const fileInput = document.getElementById('csv-file');
-        const uploadLabel = document.getElementById('upload-label');
+        const uploadLabel = fileInput.parentElement;
         const clearBtn = document.getElementById('clear-btn');
+        const fileBadgesContainer = document.getElementById('file-badges-container');
         const statusContainer = document.getElementById('status-container');
         const kpiSection = document.getElementById('kpi-section');
+        const analysisSection = document.getElementById('analysis-section');
         const dataSection = document.getElementById('data-section');
         const tableHeaders = document.getElementById('table-headers');
         const tableBody = document.getElementById('table-body');
         const searchInput = document.getElementById('search-input');
+        const yearSelect = document.getElementById('year-select');
+        const printBtn = document.getElementById('print-btn');
+        
         const showingCount = document.getElementById('showing-count');
         const totalCount = document.getElementById('total-count');
         const prevPageBtn = document.getElementById('prev-page');
         const nextPageBtn = document.getElementById('next-page');
         const pageInfo = document.getElementById('page-info');
 
-        // Escuchar la carga del archivo
-        fileInput.addEventListener('change', handleFileLoad);
-        clearBtn.addEventListener('click', resetApp);
-        searchInput.addEventListener('input', handleSearch);
+        fileInput.addEventListener('change', handleMultipleFilesLoad);
+        clearBtn.addEventListener('click', resetAppConsole);
+        searchInput.addEventListener('input', applyFiltersAndAnalysis);
+        yearSelect.addEventListener('change', applyFiltersAndAnalysis);
+        printBtn.addEventListener('click', () => window.print());
         prevPageBtn.addEventListener('click', () => changePage(-1));
         nextPageBtn.addEventListener('click', () => changePage(1));
 
-        function handleFileLoad(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        function handleMultipleFilesLoad(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
 
-            uploadLabel.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> Procesando...`;
-            showStatus('Leyendo estructura y mapeando registros del archivo aduanero...', 'info');
-
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                dynamicTyping: true,
-                complete: function(results) {
-                    rawData = results.data;
-                    filteredData = [...rawData];
-                    
-                    if(rawData.length > 0) {
-                        headers = Object.keys(rawData[0]);
-                        renderHeaders();
-                        calculateKPIs();
-                        displayData();
-                        
-                        // Mostrar secciones de la app
-                        kpiSection.classList.remove('hidden');
-                        dataSection.classList.remove('hidden');
-                        clearBtn.classList.remove('hidden');
-                        uploadLabel.innerHTML = `<i class="fa-solid fa-check mr-2"></i> Archivo Cargado`;
-                        showStatus(`Éxito: Se han procesado e indexado correctamente <strong>${rawData.length.toLocaleString()}</strong> declaraciones aduaneras.`, 'success');
-                    } else {
-                        showStatus('El archivo parece estar vacío o no tiene un formato válido.', 'error');
-                        resetApp();
+            showStatus('<i class="fa-solid fa-circle-notch animate-spin mr-2"></i>Consolidando bases de datos aduaneras en paralelo. Por favor espere...', 'info');
+            let filesProcessed = 0;
+            
+            files.forEach(file => {
+                loadedFilesNames.push(file.name);
+                Papa.parse(file, {
+                    header: true,
+                    skipEmptyLines: true,
+                    dynamicTyping: true,
+                    complete: function(results) {
+                        filesProcessed++;
+                        if(results.data && results.data.length > 0) {
+                            rawDataCentral = rawDataCentral.concat(results.data);
+                        }
+                        if (filesProcessed === files.length) {
+                            compileAndBuildDashboard();
+                        }
                     }
-                },
-                error: function(err) {
-                    showStatus('Error al leer el archivo CSV: ' + err.message, 'error');
-                    resetApp();
+                });
+            });
+        }
+
+        function compileAndBuildDashboard() {
+            if (rawDataCentral.length === 0) {
+                showStatus('Error crítico: Archivos CSV vacíos.', 'error');
+                return;
+            }
+            tableHeadersList = Object.keys(rawDataCentral[0]);
+            detectDatasetYears();
+            renderYearSelector();
+            renderTableHeaders();
+            applyFiltersAndAnalysis();
+            renderFileBadges();
+
+            kpiSection.classList.remove('hidden');
+            analysisSection.classList.remove('hidden');
+            dataSection.classList.remove('hidden');
+            clearBtn.classList.remove('hidden');
+            showStatus(`Sistema cargado. Se consolidaron <strong>${rawDataCentral.length.toLocaleString()}</strong> declaraciones aduaneras.`, 'success');
+        }
+
+        function detectDatasetYears() {
+            detectedYears.clear();
+            const yearKey = tableHeadersList.find(h => h.toLowerCase() === 'anio' || h.toLowerCase() === 'año' || h.toLowerCase().includes('anio_') || h.toLowerCase().includes('fecha_'));
+            
+            rawDataCentral.forEach(row => {
+                if (yearKey && row[yearKey]) {
+                    let val = String(row[yearKey]);
+                    let match = val.match(/\b(20\d{2})\b/);
+                    if(match) {
+                        detectedYears.add(match[1]);
+                        row['_computed_year'] = match[1];
+                    } else if (val.length === 4 && !isNaN(val)) {
+                        detectedYears.add(val);
+                        row['_computed_year'] = val;
+                    }
                 }
             });
         }
 
-        function renderHeaders() {
+        function renderYearSelector() {
+            const currentVal = yearSelect.value;
+            yearSelect.innerHTML = '<option value="ALL">Todos los años consolidados</option>';
+            const sortedYears = Array.from(detectedYears).sort((a,b) => b - a);
+            sortedYears.forEach(year => {
+                const opt = document.createElement('option');
+                opt.value = year;
+                opt.textContent = `Periodo Fiscal ${year}`;
+                yearSelect.appendChild(opt);
+            });
+            if(detectedYears.has(currentVal)) yearSelect.value = currentVal;
+        }
+
+        function renderFileBadges() {
+            fileBadgesContainer.innerHTML = '';
+            loadedFilesNames.forEach(name => {
+                fileBadgesContainer.innerHTML += `<span class="inline-flex items-center bg-gray-800 text-blue-400 border border-gray-700 px-2 py-0.5 rounded-md mr-1.5 mb-1 text-[11px] font-mono font-medium"><i class="fa-solid fa-file-code text-[10px] mr-1 text-gray-400"></i> ${name}</span>`;
+            });
+        }
+
+        function renderTableHeaders() {
             tableHeaders.innerHTML = '';
-            headers.forEach(header => {
+            tableHeadersList.forEach(header => {
+                if(header.startsWith('_')) return;
                 const th = document.createElement('th');
-                th.className = "px-4 py-3 border-b border-gray-700 text-left font-semibold text-gray-200 cursor-pointer hover:bg-gray-800 transition text-[11px]";
-                th.innerHTML = `${normalizeHeaderName(header)} <i class="fa-solid fa-sort ml-1 text-gray-500 text-[10px]"></i>`;
+                th.className = "px-3 py-2.5 border-b border-gray-700/60 text-left font-bold text-gray-300 uppercase tracking-wider text-[10px]";
+                th.textContent = header.replace(/_/g, ' ');
                 tableHeaders.appendChild(th);
             });
         }
 
-        // Traduce u optimiza nombres comunes del SENAE para que se vea limpio como InfoAduana
-        function normalizeHeaderName(name) {
-            return name.replace(/_/g, ' ').toUpperCase();
+        function applyFiltersAndAnalysis() {
+            const searchQuery = searchInput.value.toLowerCase().trim();
+            const selectedYear = yearSelect.value;
+
+            document.getElementById('print-filtered-prod').textContent = searchQuery ? searchQuery.toUpperCase() : 'TODOS';
+            document.getElementById('print-filtered-year').textContent = selectedYear === 'ALL' ? 'CONSOLIDADO COMPLETO' : selectedYear;
+
+            filteredDataCentral = rawDataCentral.filter(row => {
+                if(selectedYear !== 'ALL' && row['_computed_year'] && row['_computed_year'] !== selectedYear) return false;
+                if(searchQuery) {
+                    return tableHeadersList.some(h => String(row[h]).toLowerCase().includes(searchQuery));
+                }
+                return true;
+            });
+
+            currentPage = 1;
+            calculateKPIs();
+            executeIntelligenceAnalysis();
+            renderTableBodyRows();
         }
 
-        function displayData() {
+        function renderTableBodyRows() {
             tableBody.innerHTML = '';
-            
             const start = (currentPage - 1) * rowsPerPage;
             const end = start + rowsPerPage;
-            const pageData = filteredData.slice(start, end);
+            const pageData = filteredDataCentral.slice(start, end);
 
             if(pageData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="${headers.length}" class="text-center py-8 text-gray-500"><i class="fa-solid fa-folder-open fa-2xl mb-3 block"></i> No se encontraron coincidencias en la consulta aduanera.</td></tr>`;
-                updatePaginationControls();
+                tableBody.innerHTML = `<tr><td colspan="${tableHeadersList.length}" class="text-center py-12 text-gray-500 font-sans"><i class="fa-solid fa-magnifying-glass-chart fa-3x mb-3 text-gray-600 block"></i> No se encontraron registros para el filtro seleccionado.</td></tr>`;
+                updatePaginationLayout();
                 return;
             }
 
             pageData.forEach((row, idx) => {
                 const tr = document.createElement('tr');
-                tr.className = idx % 2 === 0 ? 'bg-gray-800 hover:bg-gray-750 transition' : 'bg-gray-800/40 hover:bg-gray-750 transition';
+                tr.className = idx % 2 === 0 ? 'bg-gray-855' : 'bg-gray-850/40';
                 
-                headers.forEach(header => {
+                tableHeadersList.forEach(header => {
+                    if(header.startsWith('_')) return;
                     const td = document.createElement('td');
-                    td.className = "px-4 py-2.5 border-b border-gray-700 max-w-xs truncate text-[12px] text-gray-300 font-mono";
+                    td.className = "px-3 py-2 border-b border-gray-700/40 max-w-xs truncate text-[11px] print:text-black";
                     let val = row[header] !== null && row[header] !== undefined ? row[header] : '-';
                     
-                    // Formatear dinámicamente si parece dinero o pesos
-                    if(typeof val === 'number' && (header.toLowerCase().includes('fob') || header.toLowerCase().includes('valor') || header.toLowerCase().includes('vnr'))) {
-                        td.textContent = '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                        td.classList.add('text-green-400');
+                    if(typeof val === 'number' && (header.toLowerCase().includes('fob') || header.toLowerCase().includes('valor'))) {
+                        td.textContent = '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2 });
+                        td.className += " text-emerald-400 font-bold print:text-black";
                     } else if(typeof val === 'number' && (header.toLowerCase().includes('peso') || header.toLowerCase().includes('kilogramo'))) {
-                        td.textContent = val.toLocaleString('en-US', { maximumFractionDigits: 2 }) + ' Kg';
+                        td.textContent = val.toLocaleString('en-US') + ' Kg';
                     } else {
                         td.textContent = val;
                     }
-                    
                     tr.appendChild(td);
                 });
                 tableBody.appendChild(tr);
             });
-
-            updatePaginationControls();
+            updatePaginationLayout();
         }
 
         function calculateKPIs() {
-            // Intentar detectar columnas financieras o de volumen comunes en el portal de datos abiertos ecuatoriano
-            const fobKey = headers.find(h => h.toLowerCase().includes('fob') || h.toLowerCase().includes('valor_declarado'));
-            const pesoKey = headers.find(h => h.toLowerCase().includes('peso') || h.toLowerCase().includes('kilogramo') || h.toLowerCase().includes('peso_neto'));
-            const distritoKey = headers.find(h => h.toLowerCase().includes('distrito') || h.toLowerCase().includes('aduana') || h.toLowerCase().includes('adua_despacho'));
+            const fobKey = tableHeadersList.find(h => h.toLowerCase().includes('fob') || h.toLowerCase().includes('valor_'));
+            const pesoKey = tableHeadersList.find(h => h.toLowerCase().includes('peso') || h.toLowerCase().includes('kilogramo'));
+            const paisKey = tableHeadersList.find(h => h.toLowerCase().includes('pais') || h.toLowerCase().includes('origen'));
 
-            let totalFob = 0;
-            let totalPeso = 0;
-            let distritosUnicos = new Set();
+            let totalFob = 0, totalPesoKg = 0;
+            let paisesUnicos = new Set();
 
-            rawData.forEach(row => {
+            filteredDataCentral.forEach(row => {
                 if(fobKey && row[fobKey]) totalFob += parseFloat(row[fobKey]) || 0;
-                if(pesoKey && row[pesoKey]) totalPeso += parseFloat(row[pesoKey]) || 0;
-                if(distritoKey && row[distritoKey]) distritosUnicos.add(row[distritoKey]);
+                if(pesoKey && row[pesoKey]) totalPesoKg += parseFloat(row[pesoKey]) || 0;
+                if(paisKey && row[paisKey]) paisesUnicos.add(row[paisKey]);
             });
 
-            document.getElementById('kpi-total').textContent = rawData.length.toLocaleString();
-            document.getElementById('kpi-fob').textContent = totalFob > 0 ? '$' + totalFob.toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-            document.getElementById('kpi-peso').textContent = totalPeso > 0 ? totalPeso.toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-            document.getElementById('kpi-distritos').textContent = distritosUnicos.size > 0 ? distritosUnicos.size : 'N/A';
+            document.getElementById('kpi-total').textContent = filteredDataCentral.length.toLocaleString();
+            document.getElementById('kpi-fob').textContent = '$' + totalFob.toLocaleString('en-US', {maximumFractionDigits:2});
+            document.getElementById('kpi-peso').textContent = (totalPesoKg / 1000).toLocaleString('en-US', {maximumFractionDigits:2}) + ' Ton';
+            document.getElementById('kpi-paises').textContent = paisesUnicos.size;
         }
 
-        function handleSearch() {
-            const query = searchInput.value.toLowerCase().trim();
-            currentPage = 1;
+        function executeIntelligenceAnalysis() {
+            const importadorKey = tableHeadersList.find(h => h.toLowerCase().includes('importador') || h.toLowerCase().includes('razon_social') || h.toLowerCase().includes('nombre_')) || tableHeadersList[3];
+            const paisKey = tableHeadersList.find(h => h.toLowerCase().includes('pais') || h.toLowerCase().includes('origen')) || tableHeadersList[4];
+            const fobKey = tableHeadersList.find(h => h.toLowerCase().includes('fob') || h.toLowerCase().includes('valor_'));
+            const pesoKey = tableHeadersList.find(h => h.toLowerCase().includes('peso') || h.toLowerCase().includes('kilogramo'));
+            const distritoKey = tableHeadersList.find(h => h.toLowerCase().includes('distrito') || h.toLowerCase().includes('aduana'));
 
-            if (!query) {
-                filteredData = [...rawData];
-            } else {
-                filteredData = rawData.filter(row => {
-                    return headers.some(header => {
-                        const cellValue = String(row[header]).toLowerCase();
-                        return cellValue.includes(query);
-                    });
-                });
-            }
-            displayData();
-        }
+            let mapImportadores = {}, mapPaises = {}, mapDistritos = {}, mapAnios = {};
+            let accumulatedFobSum = 0, accumulatedPesoSum = 0;
 
-        function updatePaginationControls() {
-            const totalPages = Math.ceil(filteredData.length / rowsPerPage) || 1;
-            showingCount.textContent = filteredData.length.toLocaleString();
-            totalCount.textContent = rawData.length.toLocaleString();
+            filteredDataCentral.forEach(row => {
+                let fobValue = fobKey ? parseFloat(row[fobKey]) || 0 : 0;
+                let pesoValue = pesoKey ? parseFloat(row[pesoKey]) || 0 : 0;
+                accumulatedFobSum += fobValue;
+                accumulatedPesoSum += pesoValue;
+
+                let imp = row[importadorKey] ? String(row[importadorKey]).trim().toUpperCase() : 'DESCONOCIDO';
+                mapImportadores[imp] = (mapImportadores[imp] || 0) + (fobValue || 1);
+
+                let pais = row[paisKey] ? String(row[paisKey]).trim().toUpperCase() : 'OTROS';
+                mapPaises[pais] = (mapPaises[pais] || 0) + (fobValue || 1);
+
+                if (distritoKey && row[distritoKey]) {
+                    let dist = String(row[distritoKey]).toUpperCase();
+                    mapDistritos[dist] = (mapDistritos[dist] || 0) + 1;
+                }
+                if (row['_computed_year']) {
+                    mapAnios[row['_computed_year']] = (mapAnios[row['_computed_year']] || 0) + fobValue;
+                }
+            });
+
+            // Top 5 Importadores
+            const topImportadores = Object.entries(mapImportadores).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            const containerImp = document.getElementById('analysis-importadores');
+            containerImp.innerHTML = '';
+            topImportadores.forEach(([name, score]) => {
+                containerImp.innerHTML += `<div class="flex justify-between border-b border-gray-800 pb-1"><span>${name}</span><span class="text-blue-400 font-bold">$${score.toLocaleString('en-US',{maximumFractionDigits:0})}</span></div>`;
+            });
+
+            // Top 5 Países
+            const topPaises = Object.entries(mapPaises).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            const containerPais = document.getElementById('analysis-paises');
+            containerPais.innerHTML = '';
+            topPaises.forEach(([name, score]) => {
+                containerPais.innerHTML += `<div class="flex justify-between border-b border-gray-800 pb-1"><span>${name}</span><span class="text-purple-400 font-bold">$${score.toLocaleString('en-US',{maximumFractionDigits:0})}</span></div>`;
+            });
+
+            const avgPrice = (accumulatedFobSum > 0 && accumulatedPesoSum > 0) ? (accumulatedFobSum / accumulatedPesoSum) : 0;
+            document.getElementById('analysis-avg-price').textContent = '$' + avgPrice.toLocaleString('en-US', {minimumFractionDigits:3});
             
+            const topDistrito = Object.entries(mapDistritos).sort((a,b) => b[1] - a[1])[0];
+            document.getElementById('analysis-top-distrito').textContent = topDistrito ? topDistrito[0] : 'N/A';
+
+            const topYear = Object.entries(mapAnios).sort((a,b) => b[1] - a[1])[0];
+            document.getElementById('analysis-top-year').textContent = topYear ? `Año ${topYear[0]}` : 'N/A';
+        }
+
+        function updatePaginationLayout() {
+            const totalPages = Math.ceil(filteredDataCentral.length / rowsPerPage) || 1;
+            showingCount.textContent = filteredDataCentral.length.toLocaleString();
+            totalCount.textContent = rawDataCentral.length.toLocaleString();
             pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
-            
             prevPageBtn.disabled = currentPage === 1;
             nextPageBtn.disabled = currentPage === totalPages;
         }
 
         function changePage(direction) {
             currentPage += direction;
-            displayData();
+            renderTableBodyRows();
         }
 
         function showStatus(msg, type) {
-            statusContainer.classList.remove('hidden', 'bg-blue-900/30', 'text-blue-300', 'border-blue-700', 'bg-green-900/30', 'text-green-300', 'border-green-700', 'bg-red-900/30', 'text-red-300', 'border-red-700');
-            statusContainer.classList.add('border');
-            
-            if(type === 'success') {
-                statusContainer.classList.add('bg-green-900/30', 'text-green-300', 'border-green-700');
-            } else if(type === 'error') {
-                statusContainer.classList.add('bg-red-900/30', 'text-red-300', 'border-red-700');
-            } else {
-                statusContainer.classList.add('bg-blue-900/30', 'text-blue-300', 'border-blue-700');
-            }
+            statusContainer.className = "mt-4 p-3 rounded-lg text-xs font-medium border bg-gray-950";
+            if(type === 'success') statusContainer.className += " bg-emerald-950/40 text-emerald-300 border-emerald-800/80";
+            else if(type === 'error') statusContainer.className += " bg-red-950/40 text-red-300 border-red-800/80";
+            else statusContainer.className += " bg-blue-950/40 text-blue-300 border-blue-800/80";
             statusContainer.innerHTML = msg;
+            statusContainer.classList.remove('hidden');
         }
 
-        function resetApp() {
-            rawData = [];
-            filteredData = [];
-            headers = [];
-            currentPage = 1;
-            fileInput.value = '';
-            searchInput.value = '';
-            
-            uploadLabel.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2"></i> Seleccionar CSV`;
-            kpiSection.classList.add('hidden');
-            dataSection.classList.add('hidden');
-            clearBtn.classList.add('hidden');
-            statusContainer.classList.add('hidden');
-        }
-    </script>
-</body>
-</html>
+        function resetAppConsole() {
+            rawDataCentral = []; filteredDataCentral = []; tableHeadersList = []; detectedYears.clear(); loadedFilesNames = [];
+            fileInput.value = ''; searchInput.value = '';
+            yearSelect.innerHTML = '<option value="ALL">Todos los años consolidados</option>';
+            fileBadgesContainer.textContent = 'Ningún archivo cargado actualmente.';
